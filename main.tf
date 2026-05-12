@@ -262,12 +262,37 @@ resource "sws_load_balancer" "internal" {
   description   = "Internal LB fronting the app tier"
 }
 
-resource "sws_lb_listener" "public_http"  { load_balancer_id = sws_load_balancer.public.id;   name = "${local.prefix}-listener-80";   protocol = "HTTP"; protocol_port = 80 }
-resource "sws_lb_listener" "public_https" { load_balancer_id = sws_load_balancer.public.id;   name = "${local.prefix}-listener-443";  protocol = "HTTPS"; protocol_port = 443 }
-resource "sws_lb_listener" "internal_api" { load_balancer_id = sws_load_balancer.internal.id; name = "${local.prefix}-listener-8080"; protocol = "HTTP"; protocol_port = 8080 }
+resource "sws_lb_listener" "public_http" {
+  load_balancer_id = sws_load_balancer.public.id
+  name = "${local.prefix}-listener-80"
+  protocol = "HTTP"
+  protocol_port = 80
+}
+resource "sws_lb_listener" "public_https" {
+  load_balancer_id = sws_load_balancer.public.id
+  name = "${local.prefix}-listener-443"
+  protocol = "HTTPS"
+  protocol_port = 443
+}
+resource "sws_lb_listener" "internal_api" {
+  load_balancer_id = sws_load_balancer.internal.id
+  name = "${local.prefix}-listener-8080"
+  protocol = "HTTP"
+  protocol_port = 8080
+}
 
-resource "sws_lb_pool" "web"  { listener_id = sws_lb_listener.public_http.id;  name = "${local.prefix}-pool-web";  protocol = "HTTP"; lb_algorithm = "ROUND_ROBIN" }
-resource "sws_lb_pool" "app"  { listener_id = sws_lb_listener.internal_api.id; name = "${local.prefix}-pool-app";  protocol = "HTTP"; lb_algorithm = "LEAST_CONNECTIONS" }
+resource "sws_lb_pool" "web" {
+  listener_id = sws_lb_listener.public_http.id
+  name = "${local.prefix}-pool-web"
+  protocol = "HTTP"
+  lb_algorithm = "ROUND_ROBIN"
+}
+resource "sws_lb_pool" "app" {
+  listener_id = sws_lb_listener.internal_api.id
+  name = "${local.prefix}-pool-app"
+  protocol = "HTTP"
+  lb_algorithm = "LEAST_CONNECTIONS"
+}
 
 resource "sws_lb_member" "web" {
   for_each       = { for k, v in sws_instance.workloads : k => v if startswith(k, "web-") }
@@ -314,11 +339,41 @@ resource "sws_dns_zone" "public" {
   email       = "admin@${var.domain_name}"
 }
 
-resource "sws_dns_record" "apex"  { zone_id = sws_dns_zone.public.id; name = "${var.domain_name}.";       type = "A";  ttl = 300; records = [sws_floating_ip.edge[0].address] }
-resource "sws_dns_record" "www"   { zone_id = sws_dns_zone.public.id; name = "www.${var.domain_name}.";   type = "A";  ttl = 300; records = [sws_floating_ip.edge[0].address] }
-resource "sws_dns_record" "api"   { zone_id = sws_dns_zone.public.id; name = "api.${var.domain_name}.";   type = "A";  ttl = 300; records = [sws_floating_ip.edge[1].address] }
-resource "sws_dns_record" "cdn"   { zone_id = sws_dns_zone.public.id; name = "cdn.${var.domain_name}.";   type = "A";  ttl = 300; records = [sws_floating_ip.edge[2].address] }
-resource "sws_dns_record" "mail"  { zone_id = sws_dns_zone.public.id; name = "mail.${var.domain_name}.";  type = "MX"; ttl = 3600; records = ["10 mx1.privateemail.com.", "10 mx2.privateemail.com."] }
+resource "sws_dns_record" "apex" {
+  zone_id = sws_dns_zone.public.id
+  name = "${var.domain_name}."
+  type = "A"
+  ttl = 300
+  records = [sws_floating_ip.edge[0].address]
+}
+resource "sws_dns_record" "www" {
+  zone_id = sws_dns_zone.public.id
+  name = "www.${var.domain_name}."
+  type = "A"
+  ttl = 300
+  records = [sws_floating_ip.edge[0].address]
+}
+resource "sws_dns_record" "api" {
+  zone_id = sws_dns_zone.public.id
+  name = "api.${var.domain_name}."
+  type = "A"
+  ttl = 300
+  records = [sws_floating_ip.edge[1].address]
+}
+resource "sws_dns_record" "cdn" {
+  zone_id = sws_dns_zone.public.id
+  name = "cdn.${var.domain_name}."
+  type = "A"
+  ttl = 300
+  records = [sws_floating_ip.edge[2].address]
+}
+resource "sws_dns_record" "mail" {
+  zone_id = sws_dns_zone.public.id
+  name = "mail.${var.domain_name}."
+  type = "MX"
+  ttl = 3600
+  records = ["10 mx1.privateemail.com.", "10 mx2.privateemail.com."]
+}
 
 resource "sws_private_dns_zone" "internal" {
   name = "internal.${local.prefix}.lan"
