@@ -148,7 +148,7 @@ terraform destroy -auto-approve \
 | Variable | Type | Default | Notes |
 |---|---|---|---|
 | `ssh_public_key` | string | `""` | Empty disables keypair create. |
-| `domain_name` | string | `spoke-test.example.com` | Public DNS zone. Use a domain you own for live resolution. |
+| `domain_name` | string | `spoke-test.savannaa.com` | Public DNS zone. Use a domain you own for live resolution. |
 | `db_admin_password` | string | `ChangeMe-Spoke-Test-2026` | Postgres + MySQL admin password. **Change for non-throwaway use.** |
 | `cache_password` | string | `ChangeMe-Cache-2026` | Redis AUTH. **Change.** |
 | `tier_workload_count` | number | `3` | Instances per app tier. `1` = fast smoke test (~80 objects), `5` = load test (~140 objects). |

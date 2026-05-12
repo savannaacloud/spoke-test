@@ -5,9 +5,9 @@ variable "ssh_public_key" {
 }
 
 variable "domain_name" {
-  description = "Public DNS zone to create. Use a domain you own (or a placeholder like spoke-test.example.com)."
+  description = "Public DNS zone to create. Use a domain you own (or a placeholder like spoke-test.savannaa.com)."
   type        = string
-  default     = "spoke-test.example.com"
+  default     = "spoke-test.savannaa.com"
 }
 
 variable "db_admin_password" {
