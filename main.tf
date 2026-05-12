@@ -110,12 +110,54 @@ resource "sws_security_group_rule" "icmp" {
 }
 
 # Web tier exposes 80/443; app tier exposes 8080; db tier exposes 5432/3306.
-resource "sws_security_group_rule" "web_http"  { security_group_id = sws_security_group.tiers["web"].id;  direction = "ingress"; protocol = "tcp"; port_range_min = 80;    port_range_max = 80;    remote_ip_prefix = "0.0.0.0/0" }
-resource "sws_security_group_rule" "web_https" { security_group_id = sws_security_group.tiers["web"].id;  direction = "ingress"; protocol = "tcp"; port_range_min = 443;   port_range_max = 443;   remote_ip_prefix = "0.0.0.0/0" }
-resource "sws_security_group_rule" "app_api"   { security_group_id = sws_security_group.tiers["app"].id;  direction = "ingress"; protocol = "tcp"; port_range_min = 8080;  port_range_max = 8080;  remote_ip_prefix = "10.50.1.0/24" }
-resource "sws_security_group_rule" "db_pg"     { security_group_id = sws_security_group.tiers["db"].id;   direction = "ingress"; protocol = "tcp"; port_range_min = 5432;  port_range_max = 5432;  remote_ip_prefix = "10.50.0.0/16" }
-resource "sws_security_group_rule" "db_mysql"  { security_group_id = sws_security_group.tiers["db"].id;   direction = "ingress"; protocol = "tcp"; port_range_min = 3306;  port_range_max = 3306;  remote_ip_prefix = "10.50.0.0/16" }
-resource "sws_security_group_rule" "lb_health" { security_group_id = sws_security_group.tiers["lb"].id;   direction = "ingress"; protocol = "tcp"; port_range_min = 80;    port_range_max = 80;    remote_ip_prefix = "0.0.0.0/0" }
+resource "sws_security_group_rule" "web_http" {
+  security_group_id = sws_security_group.tiers["web"].id
+  direction = "ingress"
+  protocol = "tcp"
+  port_range_min = 80
+  port_range_max = 80
+  remote_ip_prefix = "0.0.0.0/0"
+}
+resource "sws_security_group_rule" "web_https" {
+  security_group_id = sws_security_group.tiers["web"].id
+  direction = "ingress"
+  protocol = "tcp"
+  port_range_min = 443
+  port_range_max = 443
+  remote_ip_prefix = "0.0.0.0/0"
+}
+resource "sws_security_group_rule" "app_api" {
+  security_group_id = sws_security_group.tiers["app"].id
+  direction = "ingress"
+  protocol = "tcp"
+  port_range_min = 8080
+  port_range_max = 8080
+  remote_ip_prefix = "10.50.1.0/24"
+}
+resource "sws_security_group_rule" "db_pg" {
+  security_group_id = sws_security_group.tiers["db"].id
+  direction = "ingress"
+  protocol = "tcp"
+  port_range_min = 5432
+  port_range_max = 5432
+  remote_ip_prefix = "10.50.0.0/16"
+}
+resource "sws_security_group_rule" "db_mysql" {
+  security_group_id = sws_security_group.tiers["db"].id
+  direction = "ingress"
+  protocol = "tcp"
+  port_range_min = 3306
+  port_range_max = 3306
+  remote_ip_prefix = "10.50.0.0/16"
+}
+resource "sws_security_group_rule" "lb_health" {
+  security_group_id = sws_security_group.tiers["lb"].id
+  direction = "ingress"
+  protocol = "tcp"
+  port_range_min = 80
+  port_range_max = 80
+  remote_ip_prefix = "0.0.0.0/0"
+}
 
 # ── 4. Compute — 3 tiers × N instances ────────────────────────────────────
 data "sws_image" "ubuntu" { name = "Ubuntu 22.04 LTS" }
@@ -245,8 +287,24 @@ resource "sws_lb_member" "app" {
   name           = "member-${each.key}"
 }
 
-resource "sws_lb_health_monitor" "web" { pool_id = sws_lb_pool.web.id; type = "HTTP"; delay = 5; timeout = 3; max_retries = 3; url_path = "/";     expected_codes = "200" }
-resource "sws_lb_health_monitor" "app" { pool_id = sws_lb_pool.app.id; type = "HTTP"; delay = 5; timeout = 3; max_retries = 3; url_path = "/health"; expected_codes = "200,204" }
+resource "sws_lb_health_monitor" "web" {
+  pool_id = sws_lb_pool.web.id
+  type = "HTTP"
+  delay = 5
+  timeout = 3
+  max_retries = 3
+  url_path = "/"
+  expected_codes = "200"
+}
+resource "sws_lb_health_monitor" "app" {
+  pool_id = sws_lb_pool.app.id
+  type = "HTTP"
+  delay = 5
+  timeout = 3
+  max_retries = 3
+  url_path = "/health"
+  expected_codes = "200,204"
+}
 
 # ── 9. DNS — public + private ─────────────────────────────────────────────
 resource "sws_dns_zone" "public" {
