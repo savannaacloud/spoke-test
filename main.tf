@@ -38,13 +38,13 @@ resource "sws_keypair" "ops" {
 # ── 2. Networking ─────────────────────────────────────────────────────────
 resource "sws_network" "spoke" {
   name = "${local.prefix}-spoke"
-  cidr = "10.50.0.0/16"
+  cidr = ""
 }
 
 # A second network for peering demo.
 resource "sws_network" "transit" {
   name = "${local.prefix}-transit"
-  cidr = "10.51.0.0/16"
+  cidr = ""
 }
 
 resource "sws_subnet" "tiers" {
@@ -313,7 +313,7 @@ resource "sws_lb_health_monitor" "app" {
 
 # ── 9. DNS — public + private ─────────────────────────────────────────────
 resource "sws_dns_zone" "public" {
-  name        = var.domain_name
+  name        = "${var.domain_name}."
   description = "Public zone for ${var.domain_name}"
   ttl         = 3600
   email       = "admin@${var.domain_name}"
@@ -464,7 +464,6 @@ resource "sws_backup_policy" "daily" {
 resource "sws_serverless_container" "edge_fn" {
   name       = "${local.prefix}-fn"
   image      = "registry.savannaa.com/library/echo:latest"
-  network_id = sws_network.spoke.id
 }
 
 resource "sws_vault_secret" "db_url" {
