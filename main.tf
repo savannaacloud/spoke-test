@@ -284,7 +284,6 @@ resource "sws_lb_member" "web" {
   address        = each.value.ip_address
   protocol_port  = 80
   subnet_id      = sws_subnet.tiers["web"].id
-  name           = "member-${each.key}"
 }
 
 resource "sws_lb_member" "app" {
@@ -293,7 +292,6 @@ resource "sws_lb_member" "app" {
   address        = each.value.ip_address
   protocol_port  = 8080
   subnet_id      = sws_subnet.tiers["app"].id
-  name           = "member-${each.key}"
 }
 
 resource "sws_lb_health_monitor" "web" {
@@ -303,7 +301,6 @@ resource "sws_lb_health_monitor" "web" {
   timeout = 3
   max_retries = 3
   url_path = "/"
-  expected_codes = "200"
 }
 resource "sws_lb_health_monitor" "app" {
   pool_id = sws_lb_pool.app.id
@@ -312,7 +309,6 @@ resource "sws_lb_health_monitor" "app" {
   timeout = 3
   max_retries = 3
   url_path = "/health"
-  expected_codes = "200,204"
 }
 
 # ── 9. DNS — public + private ─────────────────────────────────────────────
