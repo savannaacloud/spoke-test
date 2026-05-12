@@ -35,3 +35,9 @@ variable "enable_kubernetes" {
   type        = bool
   default     = false
 }
+
+variable "external_network_id" {
+  description = "UUID of the external network for Kubernetes cluster floating IPs. Required only when enable_kubernetes = true."
+  type        = string
+  default     = ""
+}

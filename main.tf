@@ -189,10 +189,9 @@ resource "sws_instance" "workloads" {
 
 # ── 5. Block storage — 1 volume per workload ──────────────────────────────
 resource "sws_volume" "data" {
-  for_each    = sws_instance.workloads
-  name        = "${each.value.name}-data"
-  size_gb     = 20
-  volume_type = "gp-ssd"
+  for_each = sws_instance.workloads
+  name     = "${each.value.name}-data"
+  size     = 20
 }
 
 resource "sws_volume_attachment" "data" {
@@ -212,41 +211,26 @@ resource "sws_volume_snapshot" "baseline" {
 # ── 6. Object storage — 3 buckets per common use case ────────────────────
 resource "sws_object_bucket" "buckets" {
   for_each = toset(["assets", "logs", "backups"])
-  name = "${local.prefix}-${each.value}"
-  config = jsonencode({
-    versioning = each.value == "backups"   # versioning on backups only
-  })
+  name     = "${local.prefix}-${each.value}"
 }
 
 # ── 7. Managed databases — 1 postgres + 1 mysql ──────────────────────────
 resource "sws_managed_database" "postgres" {
-  name = "${local.prefix}-pg"
-  config = jsonencode({
-    engine                = "postgresql"
-    version               = "16"
-    plan                  = "r1.medium"
-    storage_gb            = 20
-    network_id            = sws_network.spoke.id
-    admin_user            = "spoke_admin"
-    admin_password        = var.db_admin_password
-    high_availability     = false
-    backup_retention_days = 7
-  })
+  name       = "${local.prefix}-pg"
+  datastore  = "postgresql"
+  version    = "16"
+  flavor_id  = "r1.medium"
+  size       = 20
+  network_id = sws_network.spoke.id
 }
 
 resource "sws_managed_database" "mysql" {
-  name = "${local.prefix}-mysql"
-  config = jsonencode({
-    engine                = "mysql"
-    version               = "8.4"
-    plan                  = "r1.medium"
-    storage_gb            = 20
-    network_id            = sws_network.spoke.id
-    admin_user            = "spoke_admin"
-    admin_password        = var.db_admin_password
-    high_availability     = false
-    backup_retention_days = 7
-  })
+  name       = "${local.prefix}-mysql"
+  datastore  = "mysql"
+  version    = "8.4"
+  flavor_id  = "r1.medium"
+  size       = 20
+  network_id = sws_network.spoke.id
 }
 
 # ── 8. Load balancer — 2 LBs (public + internal) ─────────────────────────
@@ -282,13 +266,13 @@ resource "sws_lb_listener" "internal_api" {
 }
 
 resource "sws_lb_pool" "web" {
-  listener_id = sws_lb_listener.public_http.id
+  load_balancer_id = sws_load_balancer.public.id
   name = "${local.prefix}-pool-web"
   protocol = "HTTP"
   lb_algorithm = "ROUND_ROBIN"
 }
 resource "sws_lb_pool" "app" {
-  listener_id = sws_lb_listener.internal_api.id
+  load_balancer_id = sws_load_balancer.internal.id
   name = "${local.prefix}-pool-app"
   protocol = "HTTP"
   lb_algorithm = "LEAST_CONNECTIONS"
@@ -376,11 +360,8 @@ resource "sws_dns_record" "mail" {
 }
 
 resource "sws_private_dns_zone" "internal" {
-  name = "internal.${local.prefix}.lan"
-  config = jsonencode({
-    description = "Private DNS for in-spoke service discovery"
-    ttl         = 60
-  })
+  name        = "internal.${local.prefix}.lan"
+  description = "Private DNS for in-spoke service discovery"
 }
 
 # ── 10. Tier-3 services — every long-tail one the provider exposes ───────
@@ -485,15 +466,9 @@ resource "sws_backup_policy" "daily" {
 }
 
 resource "sws_serverless_container" "edge_fn" {
-  name = "${local.prefix}-fn"
-  config = jsonencode({
-    image     = "registry.savannaa.com/library/echo:latest"
-    cpu       = 0.25
-    memory_mb = 256
-    min_scale = 0
-    max_scale = 5
-    public    = true
-  })
+  name       = "${local.prefix}-fn"
+  image      = "registry.savannaa.com/library/echo:latest"
+  network_id = sws_network.spoke.id
 }
 
 resource "sws_vault_secret" "db_url" {
@@ -525,26 +500,21 @@ resource "sws_tag" "env" {
 
 # ── 11. Kubernetes (opt-in) ──────────────────────────────────────────────
 resource "sws_kubernetes_template" "k8s" {
-  count = var.enable_kubernetes ? 1 : 0
-  name = "${local.prefix}-k8s-tpl"
-  config = jsonencode({
-    coe              = "kubernetes"
-    network_driver   = "calico"
-    docker_volume_size = 20
-    flavor           = "m1.medium"
-    master_flavor    = "m1.medium"
-    image            = "Fedora CoreOS 43"
-  })
+  count               = var.enable_kubernetes ? 1 : 0
+  name                = "${local.prefix}-k8s-tpl"
+  image               = "Fedora CoreOS 43"
+  flavor_id           = "m1.medium"
+  master_flavor_id    = "m1.medium"
+  external_network_id = var.external_network_id
+  keypair_id          = length(sws_keypair.admin) > 0 ? sws_keypair.admin[0].name : "default"
+  coe_name            = "kubernetes"
 }
 
 resource "sws_kubernetes_cluster" "demo" {
-  count = var.enable_kubernetes ? 1 : 0
-  name = "${local.prefix}-k8s"
-  config = jsonencode({
-    cluster_template_id = sws_kubernetes_template.k8s[0].id
-    node_count          = 2
-    master_count        = 1
-    keypair             = length(sws_keypair.admin) > 0 ? sws_keypair.admin[0].name : null
-    fixed_subnet        = sws_subnet.tiers["app"].id
-  })
+  count               = var.enable_kubernetes ? 1 : 0
+  name                = "${local.prefix}-k8s"
+  cluster_template_id = sws_kubernetes_template.k8s[0].id
+  node_count          = 2
+  master_count        = 1
+  keypair_id          = length(sws_keypair.admin) > 0 ? sws_keypair.admin[0].name : "default"
 }
