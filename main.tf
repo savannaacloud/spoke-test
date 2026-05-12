@@ -5,7 +5,7 @@
 #  (web / app / worker), block + object + file storage, two managed DBs, two
 #  LBs, public + private DNS, and every Tier-3 service the provider exposes.
 #
-#  Default scale (tier_workload_count = 3) creates ~110 OpenStack objects.
+#  Default scale (tier_workload_count = 3) creates ~110 Savannaa objects.
 #  Knock the variable down to 1 for a fast smoke test, up to 5+ for a full
 #  load test.
 ###############################################################################

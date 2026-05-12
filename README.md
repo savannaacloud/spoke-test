@@ -3,7 +3,7 @@
 Terraform that provisions **every typed resource** the
 [`savannaacloud/sws`](https://registry.terraform.io/providers/savannaacloud/sws/latest)
 provider exposes — at least once each, with several multiplied out via
-`for_each` / `count` so the deployed footprint hits **100+ OpenStack
+`for_each` / `count` so the deployed footprint hits **100+ Savannaa
 objects** on a single spoke.
 
 Use it to:
@@ -56,7 +56,7 @@ Terraformed:
 | NVA Firewall marketplace apps | No provider resources | Use `sws_instance` with a marketplace image name |
 | Bare Metal (Ironic) | No provider resources | Console order form |
 | Dedicated Servers catalog | No provider resources | Console |
-| Cost Budgets / Allocation / Alerts | No provider resources | Console (these are user-DB-side, not OpenStack) |
+| Cost Budgets / Allocation / Alerts | No provider resources | Console (these are in the Savannaa control plane, not the IaaS layer) |
 | Compliance / Audit export | No provider resources | Console |
 | Activity Log query | No provider resources | Console / `sws activity` CLI |
 | Identity / Roles | No provider resources | Console — sensitive, intentionally not exposed |
